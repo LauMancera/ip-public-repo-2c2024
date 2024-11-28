@@ -9,17 +9,14 @@ import requests
 def getAllImages(request, input=None):
     # Obtener datos crudos desde transport.py
     data = transport.getAllImages(input)
-
     # Convertir los datos crudos en objetos Card usando el translator
     images = [translator.fromRequestIntoCard(item) for item in data]
-
     # Si el usuario está autenticado, marcar favoritos
     if request.user.is_authenticated:
         user = get_user(request)
         favourites = {fav['name'] for fav in repositories.getAllFavourites(user)}
         for img in images:
             img.is_favourite = img.name in favourites
-
     return images
 # añadir favoritos (usado desde el template 'home.html')
 def saveFavourite(request):
