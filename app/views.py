@@ -56,21 +56,32 @@ def register(request):
         email = request.POST.get('email')
         password = request.POST.get('password')
         password2 = request.POST.get('password2')
+
         # Verificar si las contraseñas coinciden
         if password == password2:
             # Verificar si el nombre de usuario ya está en uso
             if User.objects.filter(username=username).exists():
                 messages.error(request, "El nombre de usuario ya está en uso.")
                 return redirect('register')
+
             # Verificar si el correo electrónico ya está registrado
             elif User.objects.filter(email=email).exists():
                 messages.error(request, "El correo electrónico ya está registrado.")
                 return redirect('register')
+
             else:
                 # Crear el nuevo usuario con los campos adicionales
                 user = User.objects.create_user(username=username, email=email, password=password)
                 user.first_name = first_name  # Asignar nombre
                 user.last_name = last_name    # Asignar apellido
                 user.save()
+
                 # Mensaje de éxito
                 messages.success(request, "Registro exitoso. Puedes iniciar sesión ahora.")
+                return redirect('login')  # Redirige al login después de registrar
+        else:
+            messages.error(request, "Las contraseñas no coinciden.")
+            return redirect('register')  # Vuelve a la página de registro si hay error
+    else:
+        return render(request, 'registration/register.html')
+
