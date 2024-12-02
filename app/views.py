@@ -4,7 +4,8 @@ from django.shortcuts import redirect, render
 from .layers.services import services
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import logout
-
+from django.contrib.auth.models import User
+from django.contrib  import messages
 def index_page(request):
     return render(request, 'index.html')
 
@@ -46,7 +47,8 @@ def deleteFavourite(request):
 
 @login_required
 def exit(request):
-    pass
+    logout(request)  
+    return redirect('login')
 def register(request):
     if request.method == 'POST':
         # Obtener los datos del formulario
@@ -58,30 +60,33 @@ def register(request):
         password2 = request.POST.get('password2')
 
         # Verificar si las contraseñas coinciden
-        if password == password2:
-            # Verificar si el nombre de usuario ya está en uso
-            if User.objects.filter(username=username).exists():
-                messages.error(request, "El nombre de usuario ya está en uso.")
-                return redirect('register')
-
-            # Verificar si el correo electrónico ya está registrado
-            elif User.objects.filter(email=email).exists():
-                messages.error(request, "El correo electrónico ya está registrado.")
-                return redirect('register')
-
-            else:
-                # Crear el nuevo usuario con los campos adicionales
-                user = User.objects.create_user(username=username, email=email, password=password)
-                user.first_name = first_name  # Asignar nombre
-                user.last_name = last_name    # Asignar apellido
-                user.save()
-
-                # Mensaje de éxito
-                messages.success(request, "Registro exitoso. Puedes iniciar sesión ahora.")
-                return redirect('login')  # Redirige al login después de registrar
-        else:
+        if password != password2:
             messages.error(request, "Las contraseñas no coinciden.")
-            return redirect('register')  # Vuelve a la página de registro si hay error
-    else:
-        return render(request, 'registration/register.html')
+            return redirect('register')  # Vuelve al formulario de registro
 
+        # Verificar si el nombre de usuario ya existe
+        if User.objects.filter(username=username).exists():
+            messages.error(request, "El nombre de usuario ya está en uso.")
+            return redirect('register')  # Vuelve al formulario de registro
+
+        # Verificar si el correo electrónico ya está registrado
+        if User.objects.filter(email=email).exists():
+            messages.error(request, "El correo electrónico ya está registrado.")
+            return redirect('register')  # Vuelve al formulario de registro
+
+        # Crear el nuevo usuario
+        user = User.objects.create_user(
+            username=username,
+            email=email,
+            password=password,
+            first_name=first_name,
+            last_name=last_name
+        )
+        user.save()
+
+        # Mostrar un mensaje de éxito
+        messages.success(request, "Registro exitoso. Ahora puedes iniciar sesión.")
+        return redirect('home')  
+
+    # Si el método no es POST, renderizar la página de registro
+    return render(request, 'registration/register.html')
